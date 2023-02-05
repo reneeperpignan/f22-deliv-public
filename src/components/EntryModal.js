@@ -14,6 +14,9 @@ import * as React from 'react';
 import { useState } from 'react';
 import { categories } from '../utils/categories';
 import { addEntry } from '../utils/mutations';
+import { updateEntry } from '../utils/mutations';
+import { deleteEntry } from '../utils/mutations';
+
 
 // Modal component for individual entries.
 
@@ -35,6 +38,8 @@ export default function EntryModal({ entry, type, user }) {
    const [link, setLink] = useState(entry.link);
    const [description, setDescription] = useState(entry.description);
    const [category, setCategory] = React.useState(entry.category);
+   const [update, setUpdate] = useState(false);
+   const [favorite, setFavorite] = useState(true);
 
    // Modal visibility handlers
 
@@ -44,10 +49,13 @@ export default function EntryModal({ entry, type, user }) {
       setLink(entry.link);
       setDescription(entry.description);
       setCategory(entry.category);
+      setFavorite(entry.favorite);
+      //setUpdate(true);
    };
 
    const handleClose = () => {
       setOpen(false);
+      setUpdate(false);
    };
 
    // Mutation handlers
@@ -59,16 +67,44 @@ export default function EntryModal({ entry, type, user }) {
          description: description,
          user: user?.displayName ? user?.displayName : "GenericUser",
          category: category,
+         favorite: favorite,
          userid: user?.uid,
       };
-
+      
       addEntry(newEntry).catch(console.error);
       handleClose();
    };
 
    // TODO: Add Edit Mutation Handler
+   const handleEdit = () => {
+      const editEntry = {
+         id: entry.id,
+         name: name,
+         link: link,
+         description: description,
+         favorite: favorite,
+         category: category,
+      
+      }
+      
+      updateEntry(editEntry).catch(console.error);
+      handleClose();
+   };
 
    // TODO: Add Delete Mutation Handler
+  const handleDelete = () => {
+   const editEntry = {
+      id: entry.id,
+      name: name,
+      link: link,
+      description: description,
+      user: user?.displayName ? user?.displayName : "GenericUser",
+      category: category,
+      userid: user?.uid,
+   }
+   deleteEntry(editEntry).catch(console.error);
+   handleClose();
+  }
 
    // Button handlers for modal opening and inside-modal actions.
    // These buttons are displayed conditionally based on if adding or editing/opening.
@@ -78,22 +114,28 @@ export default function EntryModal({ entry, type, user }) {
       type === "edit" ? <IconButton onClick={handleClickOpen}>
          <OpenInNewIcon />
       </IconButton>
-         : type === "add" ? <Button variant="contained" onClick={handleClickOpen}>
+         : type === "add" ? <Button variant="contained" onClick={handleClickOpen}> 
             Add entry
          </Button>
             : null;
 
+
+
    const actionButtons =
       type === "edit" ?
          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
+            <Button onClick={handleClose} >Cancel</Button>
+            <Button sx={{ display: (update) ? 'none' : 'inline' }} onClick={() => setUpdate(true)}  >Edit</Button>
+            <Button sx={{ display: (!update) ? 'none' : 'inline'}} onClick={handleEdit} >Confirm</Button>
+            <Button  sx={{ color: 'red' }} onClick={handleDelete}>Delete</Button>
          </DialogActions>
          : type === "add" ?
             <DialogActions>
-               <Button onClick={handleClose}>Cancel</Button>
+               <Button onClick={handleClose} >Cancel</Button>
                <Button variant="contained" onClick={handleAdd}>Add Entry</Button>
             </DialogActions>
             : null;
+            // </ThemeProvider>
 
    return (
       <div>
@@ -103,6 +145,7 @@ export default function EntryModal({ entry, type, user }) {
             <DialogContent>
                {/* TODO: Feel free to change the properties of these components to implement editing functionality. The InputProps props class for these MUI components allows you to change their traditional CSS properties. */}
                <TextField
+                  disabled={type === "add" ? update : !update}
                   margin="normal"
                   id="name"
                   label="Name"
@@ -112,6 +155,7 @@ export default function EntryModal({ entry, type, user }) {
                   onChange={(event) => setName(event.target.value)}
                />
                <TextField
+                  disabled={type === "add" ? update : !update}
                   margin="normal"
                   id="link"
                   label="Link"
@@ -122,6 +166,7 @@ export default function EntryModal({ entry, type, user }) {
                   onChange={(event) => setLink(event.target.value)}
                />
                <TextField
+                  disabled={type === "add" ? update : !update}
                   margin="normal"
                   id="description"
                   label="Description"
@@ -136,6 +181,7 @@ export default function EntryModal({ entry, type, user }) {
                <FormControl fullWidth sx={{ "margin-top": 20 }}>
                   <InputLabel id="demo-simple-select-label">Category</InputLabel>
                   <Select
+                     disabled={type === "add" ? update : !update}
                      labelId="demo-simple-select-label"
                      id="demo-simple-select"
                      value={category}
